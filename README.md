@@ -141,7 +141,7 @@ https://intermetatarsal-nondissipatedly-pearl.ngrok-free.dev/slack/events
 2. Toggle **Enable Events** to **ON**
 3. In **Request URL** paste:
    ```
-   https://a1b2-203-0-113-42.ngrok-free.app/slack/events
+   https://e.app/slack/events
    ```
 4. Slack immediately sends a `url_verification` challenge.
    Your server responds with the challenge value → Slack shows ✓ **Verified**
