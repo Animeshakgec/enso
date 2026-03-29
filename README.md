@@ -123,17 +123,13 @@ ngrok http 4000
 ngrok prints:
 
 ```
-Forwarding   https://a1b2-203-0-113-42.ngrok-free.app -> http://localhost:4000
+Forwarding   https://.ngrok-free.app -> http://localhost:4000
 ```
-
-Copy that `https://...ngrok-free.app` URL.
 
 > ⚠️ **Free ngrok URLs change every time you restart ngrok.**
 > You must update the Slack URL each restart.
 > For a stable URL: `ngrok http --domain=your-name.ngrok-free.app 4000`
 > (free static domain available after adding an authtoken).
-
-https://intermetatarsal-nondissipatedly-pearl.ngrok-free.dev/slack/events
 
 ### Step 2 — Register URL in Slack
 
