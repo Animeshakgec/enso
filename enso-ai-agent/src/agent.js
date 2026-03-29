@@ -1,38 +1,25 @@
-// src/agent.js
-// Gemini 2.5 Flash agentic loop.
-//
-// Auth strategy:
-//   • On first call  → enso_login (clientKey + clientSecret + username from .env)
-//   • Before every turn → check expiry; call enso_refresh_token if needed
-//   • If refresh fails  → fall back to full enso_login
-//
-// The token lives inside the MCP server process (your existing tokenStore in http.js).
-// We just drive it by calling the auth tools at the right moments.
 
 import { GoogleGenAI } from '@google/genai';
 import { getMCPToolsForGemini, callMCPTool } from './mcpClient.js';
 import * as dotenv from 'dotenv';
 dotenv.config();
 
-const ai    = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 const MODEL = process.env.GEMINI_MODEL || 'gemini-2.5-flash';
 
 const MAX_ROUNDS = 10;
 
-// ── Auth state (mirrors the MCP server's tokenStore) ──────────────────────────
-// We track expiry here so we can refresh proactively without a round-trip.
-
 const auth = {
-  loggedIn:  false,
+  loggedIn: false,
   expiresAt: null, // ms epoch
 };
 
 // ── Login ─────────────────────────────────────────────────────────────────────
 
 async function ensoLogin() {
-  const clientKey    = process.env.ENSO_CLIENT_KEY;
+  const clientKey = process.env.ENSO_CLIENT_KEY;
   const clientSecret = process.env.ENSO_CLIENT_SECRET;
-  const username     = process.env.ENSO_USERNAME;
+  const username = process.env.ENSO_USERNAME;
 
   if (!clientKey || !clientSecret || !username) {
     throw new Error(
@@ -47,9 +34,8 @@ async function ensoLogin() {
     throw new Error(`Enso login failed:\n${result}`);
   }
 
-  // Parse "Token expires at: 2025-01-01T00:00:00.000Z" from the MCP response
   const match = result.match(/Token expires at:\s*(\S+)/);
-  auth.loggedIn  = true;
+  auth.loggedIn = true;
   auth.expiresAt = match ? new Date(match[1]).getTime() : Date.now() + 3540_000;
 
   console.log('✅ Enso login successful. Expires:', new Date(auth.expiresAt).toISOString());
@@ -72,8 +58,6 @@ async function ensoRefresh() {
   return false;
 }
 
-// ── Ensure auth is valid before every agent turn ──────────────────────────────
-
 async function ensureAuth() {
   // Not logged in yet → full login
   if (!auth.loggedIn) {
@@ -87,7 +71,7 @@ async function ensureAuth() {
     const ok = await ensoRefresh();
     if (!ok) {
       // Refresh failed → re-login
-      auth.loggedIn  = false;
+      auth.loggedIn = false;
       auth.expiresAt = null;
       await ensoLogin();
     }
@@ -165,11 +149,7 @@ export async function runAgent(userMessage) {
     if (!candidate) return 'No response from Gemini. Please try again.';
 
     const parts = candidate.content?.parts ?? [];
-
-    // Add model turn to history (required for correct multi-turn behaviour)
     contents.push({ role: 'model', parts });
-
-    // ── Check for function calls ──────────────────────────────────────────────
     const fnCallParts = parts.filter((p) => p.functionCall);
 
     if (fnCallParts.length === 0) {
@@ -181,8 +161,6 @@ export async function runAgent(userMessage) {
         .trim();
       return reply || 'Done.';
     }
-
-    // ── Execute each tool call ────────────────────────────────────────────────
     const fnResponseParts = [];
 
     for (const part of fnCallParts) {
@@ -206,11 +184,8 @@ export async function runAgent(userMessage) {
         },
       });
     }
-
-    // Feed all tool results back in one 'function' role turn
     contents.push({ role: 'function', parts: fnResponseParts });
 
-    // Loop — Gemini reasons about results and may call more tools
   }
 
   return 'Sorry, I took too many steps. Please try a simpler request.';

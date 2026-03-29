@@ -33,17 +33,9 @@ export async function connectMCP() {
   console.log('✅ MCP server connected');
   return mcpClient;
 }
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Gemini rejects these JSON Schema keywords with 400 Bad Request.
-// The MCP SDK's Zod-generated schemas include both of them everywhere —
-// at the top level AND deeply nested inside properties / array items.
-// We must strip them recursively through the entire schema tree.
-// ─────────────────────────────────────────────────────────────────────────────
 const STRIP_KEYS = new Set(['$schema', 'additionalProperties']);
 
 function cleanSchema(node) {
-  // Only process plain objects — leave primitives, arrays of primitives alone
   if (node === null || node === undefined) return node;
 
   if (Array.isArray(node)) {
@@ -53,13 +45,13 @@ function cleanSchema(node) {
   if (typeof node === 'object') {
     const out = {};
     for (const [k, v] of Object.entries(node)) {
-      if (STRIP_KEYS.has(k)) continue;   // ← drop the forbidden key
-      out[k] = cleanSchema(v);           // ← recurse into every value
+      if (STRIP_KEYS.has(k)) continue;
+      out[k] = cleanSchema(v);
     }
     return out;
   }
 
-  return node; // string, number, boolean — return as-is
+  return node;
 }
 
 export async function getMCPToolsForGemini() {
