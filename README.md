@@ -24,6 +24,7 @@ ai-agent/
 3. Click **Create API Keys** — give them a name
 4. Copy **Client Key** and **Client Secret** (or download the CSV)
 5. Your `ENSO_USERNAME` is your Enso login email
+6. Here is the api document: https://docs.getenso.ai/
 
 ### 2.2 Gemini API Key
 
